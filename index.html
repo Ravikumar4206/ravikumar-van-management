@@ -1,0 +1,1272 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <title>School Van Management System - Premium Dashboard</title>
+  
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Leaflet Map CSS & JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- CSS Stylesheet with cache bust -->
+  <link rel="stylesheet" href="styles.css?v=20260623">
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Supabase CDN client library -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+  <!-- ================= AUTHENTICATION OVERLAY ================= -->
+  <div id="login-screen" class="login-container" style="display: none;">
+    <div class="login-card">
+      <div class="login-header">
+        <div class="login-logo">
+          <i class="fa-solid fa-bus"></i>
+        </div>
+        <h2 class="login-title" data-i18n="loginTitle">Admin Login</h2>
+        <p class="login-subtitle" data-i18n="loginSubtitle">School Van Management System</p>
+      </div>
+      <form id="login-form" novalidate>
+        <div class="form-group">
+          <label class="form-label" for="login-username" data-i18n="usernameLabel">Username</label>
+          <div class="input-with-icon">
+            <i class="fa-solid fa-user"></i>
+            <input type="text" id="login-username" class="form-input" required placeholder="Enter username">
+          </div>
+          <span class="inline-error" id="error-username">Username is required.</span>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label" for="login-password" data-i18n="passwordLabel">Password</label>
+          <div class="input-with-icon">
+            <i class="fa-solid fa-lock"></i>
+            <input type="password" id="login-password" class="form-input" required placeholder="Enter password">
+          </div>
+          <span class="inline-error" id="error-password">Password is required.</span>
+        </div>
+
+        <div class="form-group" style="display: flex; justify-content: space-between; align-items: center;">
+          <label class="form-checkbox">
+            <input type="checkbox" id="login-remember">
+            <span data-i18n="rememberMe">Remember me</span>
+          </label>
+        </div>
+
+        <button type="submit" class="login-btn" id="login-btn-text" data-i18n="loginBtn">Login</button>
+        <div class="inline-error" id="login-general-error" style="text-align: center; margin-top: 15px;"></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= APPLICATION SHELL ================= -->
+  <div id="app-shell" class="app-shell" style="display: none;">
+    
+    <!-- Sidebar Navigation -->
+    <aside class="app-sidebar" id="app-sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">
+          <i class="fa-solid fa-bus"></i>
+          <span data-i18n="loginSubtitle">School Van</span>
+        </div>
+      </div>
+      <ul class="sidebar-menu">
+        <li class="sidebar-item">
+          <a class="sidebar-link active" data-section="dashboard">
+            <i class="fa-solid fa-chart-pie"></i>
+            <span data-i18n="navDashboard">Dashboard</span>
+          </a>
+        </li>
+        <li class="sidebar-item">
+          <a class="sidebar-link" data-section="vans">
+            <i class="fa-solid fa-van-shuttle"></i>
+            <span data-i18n="navVans">Vans</span>
+          </a>
+        </li>
+        <li class="sidebar-item">
+          <a class="sidebar-link" data-section="drivers">
+            <i class="fa-solid fa-id-card"></i>
+            <span data-i18n="navDrivers">Drivers</span>
+          </a>
+        </li>
+        <li class="sidebar-item">
+          <a class="sidebar-link" data-section="students">
+            <i class="fa-solid fa-user-graduate"></i>
+            <span data-i18n="navStudents">Students</span>
+          </a>
+        </li>
+        <li class="sidebar-item">
+          <a class="sidebar-link" data-section="trips">
+            <i class="fa-solid fa-route"></i>
+            <span data-i18n="navTrips">Trips</span>
+          </a>
+        </li>
+        <li class="sidebar-item">
+          <a class="sidebar-link" data-section="payments">
+            <i class="fa-solid fa-credit-card"></i>
+            <span data-i18n="navPayments">Payments</span>
+          </a>
+        </li>
+        <li class="sidebar-item">
+          <a class="sidebar-link" data-section="reports">
+            <i class="fa-solid fa-file-invoice-dollar"></i>
+            <span data-i18n="navReports">Reports</span>
+          </a>
+        </li>
+        <li class="sidebar-item">
+          <a class="sidebar-link" data-section="settings">
+            <i class="fa-solid fa-gears"></i>
+            <span data-i18n="navSettings">Settings</span>
+          </a>
+        </li>
+      </ul>
+      <div class="sidebar-footer">
+        <div class="sidebar-user">
+          <div class="sidebar-user-avatar">A</div>
+          <div class="sidebar-user-info">
+            <span class="sidebar-user-name">Admin</span>
+            <span class="sidebar-user-role" data-i18n="loginTitle">Administrator</span>
+          </div>
+        </div>
+        <button class="sidebar-logout" id="logout-btn" data-i18n-title="navLogout" title="Logout">
+          <i class="fa-solid fa-right-from-bracket"></i>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="app-main">
+      
+      <!-- Top Header -->
+      <header class="app-header">
+        <div class="header-left">
+          <button class="sidebar-toggle" id="sidebar-toggle">
+            <i class="fa-solid fa-bars"></i>
+          </button>
+          
+          <!-- Universal Global Search -->
+          <div class="global-search-container">
+            <div class="global-search-wrapper">
+              <i class="fa-solid fa-magnifying-glass search-icon"></i>
+              <input type="text" id="global-search" class="global-search-input" data-i18n-placeholder="globalSearchPlaceholder" placeholder="Universal search...">
+              <button class="voice-search-btn" id="voice-search-btn" data-i18n-title="voiceBtnTooltip" title="Voice Search">
+                <i class="fa-solid fa-microphone"></i>
+              </button>
+            </div>
+            <!-- Search Suggestion Panel -->
+            <div class="search-suggestions-dropdown" id="search-suggestions">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+        </div>
+        
+        <div class="header-right">
+          <!-- Language Selector -->
+          <select id="lang-switcher" class="lang-selector" aria-label="Select Language">
+            <option value="en">English</option>
+            <option value="ta">தமிழ்</option>
+          </select>
+          
+          <!-- Light/Dark Mode Switch -->
+          <button class="header-action-btn" id="theme-toggle" aria-label="Toggle Dark Mode">
+            <i class="fa-solid fa-moon"></i>
+          </button>
+          
+          <!-- Notifications Center Bell -->
+          <button class="header-action-btn" id="notif-toggle" aria-label="Notifications Center">
+            <i class="fa-solid fa-bell"></i>
+            <span class="badge" id="notif-badge" style="display: none;">0</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Main Dynamic Content Wrapper -->
+      <div class="app-content" id="app-content">
+
+        <!-- ================= DASHBOARD SECTION ================= -->
+        <section id="section-dashboard" class="content-section">
+          <div class="content-header">
+            <div class="page-title-group">
+              <h1 class="page-title" data-i18n="navDashboard">Dashboard</h1>
+              <p class="page-subtitle" data-i18n="loginSubtitle">System Analytics</p>
+            </div>
+          </div>
+
+          <!-- KPI Cards Grid -->
+          <div class="kpi-grid">
+            <div class="kpi-card">
+              <div class="kpi-info">
+                <span class="kpi-title" data-i18n="kpiTotalVans">Total Vans</span>
+                <span class="kpi-value" id="kpi-vans">0</span>
+              </div>
+              <div class="kpi-icon-wrapper">
+                <i class="fa-solid fa-van-shuttle"></i>
+              </div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-info">
+                <span class="kpi-title" data-i18n="kpiTotalDrivers">Total Drivers</span>
+                <span class="kpi-value" id="kpi-drivers">0</span>
+              </div>
+              <div class="kpi-icon-wrapper">
+                <i class="fa-solid fa-id-card"></i>
+              </div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-info">
+                <span class="kpi-title" data-i18n="kpiTotalStudents">Total Students</span>
+                <span class="kpi-value" id="kpi-students">0</span>
+              </div>
+              <div class="kpi-icon-wrapper">
+                <i class="fa-solid fa-user-graduate"></i>
+              </div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-info">
+                <span class="kpi-title" data-i18n="kpiTodaysTrips">Today's Trips</span>
+                <span class="kpi-value" id="kpi-trips">0</span>
+              </div>
+              <div class="kpi-icon-wrapper">
+                <i class="fa-solid fa-route"></i>
+              </div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-info">
+                <span class="kpi-title" data-i18n="kpiPendingPayments">Pending Payments</span>
+                <span class="kpi-value" id="kpi-payments">0</span>
+              </div>
+              <div class="kpi-icon-wrapper">
+                <i class="fa-solid fa-circle-exclamation"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- Charts and Activity Widgets Grid -->
+          <div class="dashboard-grid">
+            
+            <!-- Chart Widgets -->
+            <div class="dashboard-charts-subgrid">
+              <div class="widget-card">
+                <h3 class="widget-title"><i class="fa-solid fa-chart-column" style="color:var(--primary);"></i><span data-i18n="chartCollections">Monthly Collections (₹)</span></h3>
+                <div class="chart-container">
+                  <canvas id="chart-monthly-collections"></canvas>
+                </div>
+              </div>
+              <div class="widget-card">
+                <h3 class="widget-title"><i class="fa-solid fa-chart-pie" style="color:var(--info);"></i><span data-i18n="chartDistribution">Student Distribution</span></h3>
+                <div class="chart-container">
+                  <canvas id="chart-student-distribution"></canvas>
+                </div>
+              </div>
+              <div class="widget-card">
+                <h3 class="widget-title"><i class="fa-solid fa-chart-line" style="color:var(--secondary);"></i><span data-i18n="chartTrips">Trips Overview</span></h3>
+                <div class="chart-container">
+                  <canvas id="chart-trips-overview"></canvas>
+                </div>
+              </div>
+              <div class="widget-card">
+                <h3 class="widget-title"><i class="fa-solid fa-circle-half-stroke" style="color:var(--warning);"></i><span data-i18n="chartPaymentStatus">Payment Status</span></h3>
+                <div class="chart-container">
+                  <canvas id="chart-payment-status"></canvas>
+                </div>
+              </div>
+            </div>
+
+            <!-- Side Widgets -->
+            <div>
+              <div class="widget-card">
+                <h3 class="widget-title"><i class="fa-solid fa-bell" style="color:var(--warning);"></i><span data-i18n="widgetNotifications">Important Alerts</span></h3>
+                <div class="alert-list" id="dashboard-notif-list">
+                  <!-- Generated dynamically -->
+                </div>
+              </div>
+              <div class="widget-card">
+                <h3 class="widget-title"><i class="fa-solid fa-clock-rotate-left" style="color:var(--primary);"></i><span data-i18n="widgetActivities">Recent Activities</span></h3>
+                <div class="activity-list" id="dashboard-activity-list">
+                  <!-- Generated dynamically -->
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        <!-- ================= VAN MANAGEMENT SECTION ================= -->
+        <section id="section-vans" class="content-section" style="display: none;">
+          <div class="content-header">
+            <div class="page-title-group">
+              <h1 class="page-title" data-i18n="vanTitle">Van Fleet Management</h1>
+              <p class="page-subtitle">Add, edit and monitor transport vehicles</p>
+            </div>
+            <button class="btn btn-primary" id="btn-add-van"><i class="fa-solid fa-plus"></i><span data-i18n="addBtn">Add New</span></button>
+          </div>
+
+          <div class="card-table-container">
+            <div class="table-toolbar">
+              <div class="toolbar-left">
+                <div class="toolbar-search">
+                  <i class="fa-solid fa-magnifying-glass"></i>
+                  <input type="text" id="van-search" class="toolbar-search-input" data-i18n-placeholder="searchPlaceholder" placeholder="Search vans...">
+                </div>
+                <select id="van-filter-status" class="toolbar-select">
+                  <option value="" data-i18n="filterAll">All Statuses</option>
+                  <option value="Active" data-i18n="statusActive">Active</option>
+                  <option value="In Service" data-i18n="statusInService">In Service</option>
+                  <option value="Maintenance" data-i18n="statusMaintenance">Maintenance</option>
+                </select>
+              </div>
+            </div>
+            <div class="responsive-table-wrapper">
+              <table class="data-table" id="vans-table">
+                <thead>
+                  <tr>
+                    <th data-sort="vanNumber"><span data-i18n="vanNum">Van Number</span><i class="fa-solid fa-arrow-down-short-wide sort-icon"></i></th>
+                    <th data-sort="registrationNumber"><span data-i18n="vanReg">Reg Number</span><i class="fa-solid fa-arrow-down-short-wide sort-icon"></i></th>
+                    <th data-sort="vehicleModel"><span data-i18n="vanModel">Vehicle Model</span><i class="fa-solid fa-arrow-down-short-wide sort-icon"></i></th>
+                    <th data-sort="capacity"><span data-i18n="vanCap">Capacity</span><i class="fa-solid fa-arrow-down-short-wide sort-icon"></i></th>
+                    <th data-sort="assignedDriverId"><span data-i18n="vanDriver">Assigned Driver</span><i class="fa-solid fa-arrow-down-short-wide sort-icon"></i></th>
+                    <th data-sort="status"><span data-i18n="vanStatus">Status</span><i class="fa-solid fa-arrow-down-short-wide sort-icon"></i></th>
+                    <th data-i18n="actionCol">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="vans-table-body">
+                  <!-- Rows generated dynamically -->
+                </tbody>
+              </table>
+            </div>
+            <!-- Pagination Controls -->
+            <div class="table-pagination" id="vans-pagination"></div>
+          </div>
+        </section>
+
+        <!-- ================= DRIVER MANAGEMENT SECTION ================= -->
+        <section id="section-drivers" class="content-section" style="display: none;">
+          <div class="content-header">
+            <div class="page-title-group">
+              <h1 class="page-title" data-i18n="driverTitle">Driver Management</h1>
+              <p class="page-subtitle">Track, register and edit professional school drivers</p>
+            </div>
+            <button class="btn btn-primary" id="btn-add-driver"><i class="fa-solid fa-plus"></i><span data-i18n="addBtn">Add New</span></button>
+          </div>
+
+          <div class="card-table-container">
+            <div class="table-toolbar">
+              <div class="toolbar-left">
+                <div class="toolbar-search">
+                  <i class="fa-solid fa-magnifying-glass"></i>
+                  <input type="text" id="driver-search" class="toolbar-search-input" data-i18n-placeholder="searchPlaceholder" placeholder="Search drivers...">
+                </div>
+              </div>
+            </div>
+            <div class="responsive-table-wrapper">
+              <table class="data-table" id="drivers-table">
+                <thead>
+                  <tr>
+                    <th data-sort="name"><span data-i18n="driverName">Driver Name</span><i class="fa-solid fa-arrow-down-short-wide sort-icon"></i></th>
+                    <th data-sort="phone"><span data-i18n="driverPhone">Phone</span><i class="fa-solid fa-arrow-down-short-wide sort-icon"></i></th>
+                    <th data-sort="licenseNumber"><span data-i18n="driverLicNum">License Number</span><i class="fa-solid fa-arrow-down-short-wide sort-icon"></i></th>
+                    <th data-sort="assignedVanNumber"><span data-i18n="driverVan">Assigned Van</span><i class="fa-solid fa-arrow-down-short-wide sort-icon"></i></th>
+                    <th data-i18n="actionCol">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="drivers-table-body">
+                  <!-- Rows generated dynamically -->
+                </tbody>
+              </table>
+            </div>
+            <!-- Pagination Controls -->
+            <div class="table-pagination" id="drivers-pagination"></div>
+          </div>
+        </section>
+
+        <!-- ================= STUDENT MANAGEMENT SECTION ================= -->
+        <section id="section-students" class="content-section" style="display: none;">
+          <div class="content-header">
+            <div class="page-title-group">
+              <h1 class="page-title" data-i18n="studentTitle">Student Registry</h1>
+              <p class="page-subtitle">Manage student enrollment, boarding classes and routes</p>
+            </div>
+            <button class="btn btn-primary" id="btn-add-student"><i class="fa-solid fa-plus"></i><span data-i18n="addBtn">Add New</span></button>
+          </div>
+
+          <div class="card-table-container">
+            <div class="table-toolbar">
+              <div class="toolbar-left">
+                <div class="toolbar-search">
+                  <i class="fa-solid fa-magnifying-glass"></i>
+                  <input type="text" id="student-search" class="toolbar-search-input" data-i18n-placeholder="searchPlaceholder" placeholder="Search students...">
+                </div>
+                <select id="student-filter-class" class="toolbar-select">
+                  <option value="" data-i18n="filterClassAll">All Classes</option>
+                  <option value="6">Class 6</option>
+                  <option value="7">Class 7</option>
+                  <option value="8">Class 8</option>
+                  <option value="9">Class 9</option>
+                  <option value="10">Class 10</option>
+                  <option value="11">Class 11</option>
+                  <option value="12">Class 12</option>
+                </select>
+                <select id="student-filter-van" class="toolbar-select">
+                  <!-- Populated dynamically -->
+                </select>
+              </div>
+            </div>
+            <div class="responsive-table-wrapper">
+              <table class="data-table" id="students-table">
+                <thead>
+                  <tr>
+                    <th data-sort="name"><span data-i18n="studentName">Student Name</span><i class="fa-solid fa-arrow-down-short-wide sort-icon"></i></th>
+                    <th data-sort="class"><span data-i18n="studentClass">Class</span><i class="fa-solid fa-arrow-down-short-wide sort-icon"></i></th>
+                    <th data-sort="section"><span data-i18n="studentSection">Sec</span><i class="fa-solid fa-arrow-down-short-wide sort-icon"></i></th>
+                    <th data-sort="parentName"><span data-i18n="studentParent">Parent Name</span><i class="fa-solid fa-arrow-down-short-wide sort-icon"></i></th>
+                    <th data-sort="parentPhone"><span data-i18n="studentParentPhone">Parent Phone</span><i class="fa-solid fa-arrow-down-short-wide sort-icon"></i></th>
+                    <th data-sort="studentStop"><span data-i18n="studentStop">Student Stop</span><i class="fa-solid fa-arrow-down-short-wide sort-icon"></i></th>
+                    <th data-sort="assignedVanNumber"><span data-i18n="studentVan">Assigned Van</span><i class="fa-solid fa-arrow-down-short-wide sort-icon"></i></th>
+                    <th data-i18n="actionCol">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="students-table-body">
+                  <!-- Rows generated dynamically -->
+                </tbody>
+              </table>
+            </div>
+            <!-- Pagination Controls -->
+            <div class="table-pagination" id="students-pagination"></div>
+          </div>
+        </section>
+
+        <!-- ================= TRIP MANAGEMENT SECTION ================= -->
+        <section id="section-trips" class="content-section" style="display: none;">
+          <div class="content-header">
+            <div class="page-title-group">
+              <h1 class="page-title" data-i18n="tripTitle">Trip Scheduler</h1>
+              <p class="page-subtitle">Schedule routes, assign crews and trigger active status</p>
+            </div>
+            <button class="btn btn-primary" id="btn-add-trip"><i class="fa-solid fa-plus"></i><span data-i18n="addBtn">Add New</span></button>
+          </div>
+
+          <div class="card-table-container">
+            <div class="table-toolbar">
+              <div class="toolbar-left">
+                <div class="toolbar-search">
+                  <i class="fa-solid fa-magnifying-glass"></i>
+                  <input type="text" id="trip-search" class="toolbar-search-input" data-i18n-placeholder="searchPlaceholder" placeholder="Search routes/trips...">
+                </div>
+                <select id="trip-filter-status" class="toolbar-select">
+                  <option value="" data-i18n="filterAll">All Statuses</option>
+                  <option value="Scheduled" data-i18n="statusScheduled">Scheduled</option>
+                  <option value="Running" data-i18n="statusRunning">Running</option>
+                  <option value="Completed" data-i18n="statusCompleted">Completed</option>
+                </select>
+              </div>
+            </div>
+            <div class="responsive-table-wrapper">
+              <table class="data-table" id="trips-table">
+                <thead>
+                  <tr>
+                    <th data-sort="tripId"><span data-i18n="tripId">Trip ID</span><i class="fa-solid fa-arrow-down-short-wide sort-icon"></i></th>
+                    <th data-sort="date"><span data-i18n="tripDate">Date</span><i class="fa-solid fa-arrow-down-short-wide sort-icon"></i></th>
+                    <th data-sort="route"><span data-i18n="tripRoute">Route</span><i class="fa-solid fa-arrow-down-short-wide sort-icon"></i></th>
+                    <th data-sort="driverId"><span data-i18n="tripDriver">Driver</span><i class="fa-solid fa-arrow-down-short-wide sort-icon"></i></th>
+                    <th data-sort="vanNumber"><span data-i18n="tripVan">Van</span><i class="fa-solid fa-arrow-down-short-wide sort-icon"></i></th>
+                    <th data-sort="startTime"><span data-i18n="tripStart">Start Time</span><i class="fa-solid fa-arrow-down-short-wide sort-icon"></i></th>
+                    <th data-sort="endTime"><span data-i18n="tripEnd">End Time</span><i class="fa-solid fa-arrow-down-short-wide sort-icon"></i></th>
+                    <th data-sort="status"><span data-i18n="tripStatus">Status</span><i class="fa-solid fa-arrow-down-short-wide sort-icon"></i></th>
+                    <th data-i18n="actionCol">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="trips-table-body">
+                  <!-- Rows generated dynamically -->
+                </tbody>
+              </table>
+            </div>
+            <!-- Pagination Controls -->
+            <div class="table-pagination" id="trips-pagination"></div>
+          </div>
+        </section>
+
+        <!-- ================= PAYMENT MANAGEMENT SECTION ================= -->
+        <section id="section-payments" class="content-section" style="display: none;">
+          <div class="content-header">
+            <div class="page-title-group">
+              <h1 class="page-title" data-i18n="paymentTitle">Fee Payment Tracker</h1>
+              <p class="page-subtitle">Track payment logs, collect fees and manage pending dues</p>
+            </div>
+            <button class="btn btn-primary" id="btn-add-payment"><i class="fa-solid fa-plus"></i><span data-i18n="addBtn">Add New</span></button>
+          </div>
+
+          <div class="card-table-container">
+            <div class="table-toolbar">
+              <div class="toolbar-left">
+                <div class="toolbar-search">
+                  <i class="fa-solid fa-magnifying-glass"></i>
+                  <input type="text" id="payment-search" class="toolbar-search-input" data-i18n-placeholder="searchPlaceholder" placeholder="Search payments...">
+                </div>
+                <select id="payment-filter-status" class="toolbar-select">
+                  <option value="" data-i18n="filterAll">All Statuses</option>
+                  <option value="Paid" data-i18n="statusPaid">Paid</option>
+                  <option value="Pending" data-i18n="statusPending">Pending</option>
+                </select>
+              </div>
+            </div>
+            <div class="responsive-table-wrapper">
+              <table class="data-table" id="payments-table">
+                <thead>
+                  <tr>
+                    <th data-sort="studentName"><span data-i18n="payStudent">Student Name</span><i class="fa-solid fa-arrow-down-short-wide sort-icon"></i></th>
+                    <th data-sort="totalFee"><span data-i18n="payTotal">Total Fee</span><i class="fa-solid fa-arrow-down-short-wide sort-icon"></i></th>
+                    <th data-sort="paidAmount"><span data-i18n="payPaid">Paid Amount</span><i class="fa-solid fa-arrow-down-short-wide sort-icon"></i></th>
+                    <th data-sort="pendingAmount"><span data-i18n="payPending">Pending Amount</span><i class="fa-solid fa-arrow-down-short-wide sort-icon"></i></th>
+                    <th data-sort="paymentDate"><span data-i18n="payDate">Payment Date</span><i class="fa-solid fa-arrow-down-short-wide sort-icon"></i></th>
+                    <th data-sort="paymentMode"><span data-i18n="payMode">Mode</span><i class="fa-solid fa-arrow-down-short-wide sort-icon"></i></th>
+                    <th data-sort="status"><span data-i18n="payStatus">Status</span><i class="fa-solid fa-arrow-down-short-wide sort-icon"></i></th>
+                    <th data-i18n="actionCol">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="payments-table-body">
+                  <!-- Rows generated dynamically -->
+                </tbody>
+              </table>
+            </div>
+            <!-- Pagination Controls -->
+            <div class="table-pagination" id="payments-pagination"></div>
+          </div>
+        </section>
+
+        <!-- ================= REPORTS SECTION ================= -->
+        <section id="section-reports" class="content-section" style="display: none;">
+          <div class="content-header">
+            <div class="page-title-group">
+              <h1 class="page-title" data-i18n="reportsTitle">Data Reports & Export</h1>
+              <p class="page-subtitle">Preview databases and download CSV exports</p>
+            </div>
+          </div>
+
+          <div class="reports-layout">
+            <!-- Sidebar Selection -->
+            <div class="report-sidebar">
+              <button class="report-sidebar-btn active" data-report-type="students">
+                <i class="fa-solid fa-user-graduate"></i>
+                <span data-i18n="repStudents">Student Register</span>
+              </button>
+              <button class="report-sidebar-btn" data-report-type="drivers">
+                <i class="fa-solid fa-id-card"></i>
+                <span data-i18n="repDrivers">Driver Directory</span>
+              </button>
+              <button class="report-sidebar-btn" data-report-type="vans">
+                <i class="fa-solid fa-van-shuttle"></i>
+                <span data-i18n="repVans">Van Fleet Inventory</span>
+              </button>
+              <button class="report-sidebar-btn" data-report-type="payments">
+                <i class="fa-solid fa-credit-card"></i>
+                <span data-i18n="repPayments">Financial Ledger</span>
+              </button>
+            </div>
+
+            <!-- Preview and Export Panel -->
+            <div class="card-table-container">
+              <div class="table-toolbar">
+                <h3 class="widget-title" data-i18n="previewData">Report Preview</h3>
+                <button class="btn btn-primary" id="btn-export-csv">
+                  <i class="fa-solid fa-file-arrow-down"></i>
+                  <span data-i18n="exportCsv">Export to CSV</span>
+                </button>
+              </div>
+              <div class="responsive-table-wrapper">
+                <table class="data-table" id="report-preview-table">
+                  <thead>
+                    <tr id="report-preview-header">
+                      <!-- Generated dynamically -->
+                    </tr>
+                  </thead>
+                  <tbody id="report-preview-body">
+                    <!-- Generated dynamically -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= SETTINGS SECTION ================= -->
+        <section id="section-settings" class="content-section" style="display: none;">
+          <div class="content-header">
+            <div class="page-title-group">
+              <h1 class="page-title" data-i18n="settingsTitle">System Settings</h1>
+              <p class="page-subtitle">Configure language, themes and resets</p>
+            </div>
+          </div>
+
+          <div class="settings-grid">
+            
+            <div class="settings-card">
+              <h3 class="settings-section-title" data-i18n="setLang">Default Language</h3>
+              <div class="setting-row">
+                <div class="setting-label-group">
+                  <span class="setting-label" data-i18n="setLang">Default Language</span>
+                  <span class="setting-desc">Sets default system language locale</span>
+                </div>
+                <select id="settings-lang" class="toolbar-select" style="min-width: 140px;">
+                  <option value="en">English</option>
+                  <option value="ta">தமிழ்</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="settings-card">
+              <h3 class="settings-section-title" data-i18n="setTheme">UI Color Theme</h3>
+              <div class="setting-row">
+                <div class="setting-label-group">
+                  <span class="setting-label" data-i18n="setTheme">UI Color Theme</span>
+                  <span class="setting-desc">Switch between light and dark display modes</span>
+                </div>
+                <select id="settings-theme" class="toolbar-select" style="min-width: 140px;">
+                  <option value="light" data-i18n="themeLight">Light Theme</option>
+                  <option value="dark" data-i18n="themeDark">Dark Theme</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="settings-card">
+              <h3 class="settings-section-title">Preferences</h3>
+              <div class="setting-row">
+                <div class="setting-label-group">
+                  <span class="setting-label" data-i18n="setSound">Enable System Sound Effects</span>
+                  <span class="setting-desc">Play brief sounds on action triggers or warnings</span>
+                </div>
+                <label class="switch-control">
+                  <input type="checkbox" id="settings-sound" checked>
+                  <span class="switch-slider"></span>
+                </label>
+              </div>
+              <div class="setting-row">
+                <div class="setting-label-group">
+                  <span class="setting-label" data-i18n="setPush">Enable Alerts & Notifications</span>
+                  <span class="setting-desc">Allow toast alerts for background activity triggers</span>
+                </div>
+                <label class="switch-control">
+                  <input type="checkbox" id="settings-push" checked>
+                  <span class="switch-slider"></span>
+                </label>
+              </div>
+            </div>
+
+            <div class="settings-card">
+              <h3 class="settings-section-title"><i class="fa-solid fa-database" style="color: var(--primary); margin-right: 8px;"></i>Cloud Database Sync</h3>
+              <div class="setting-row" style="flex-direction: column; align-items: stretch; gap: 12px; border: none;">
+                <div class="setting-label-group">
+                  <span class="setting-label">Database Connection Mode</span>
+                  <span class="setting-desc">Choose between local offline browser storage or real-time cloud database (Supabase)</span>
+                </div>
+                <select id="settings-db-mode" class="toolbar-select" style="width: 100%; height: 40px; margin-top: 4px;">
+                  <option value="local">Local Storage (Offline Mode)</option>
+                  <option value="supabase">Supabase Cloud Database</option>
+                </select>
+              </div>
+              
+              <div id="supabase-config-inputs" style="display: none; border-top: 1px solid var(--border-color); padding-top: 15px; margin-top: 10px;">
+                <div class="form-group" style="margin-bottom: 12px;">
+                  <label class="form-label" style="font-weight: 500;">Supabase Project URL</label>
+                  <input type="text" id="settings-supabase-url" class="form-input" style="padding-left: 14px;" placeholder="https://your-project.supabase.co">
+                </div>
+                <div class="form-group" style="margin-bottom: 15px;">
+                  <label class="form-label" style="font-weight: 500;">Supabase Anon API Key</label>
+                  <input type="password" id="settings-supabase-key" class="form-input" style="padding-left: 14px;" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...">
+                </div>
+                <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                  <button type="button" class="btn btn-primary" id="btn-test-db" style="width: auto; padding: 10px 20px;">
+                    <i class="fa-solid fa-plug" style="margin-right: 6px;"></i>Test & Save Connection
+                  </button>
+                  <span id="db-connection-status" style="align-self: center; font-size: 13px; font-weight: 600;"></span>
+                </div>
+                
+                <div class="form-group" style="border-top: 1px solid var(--border-color); padding-top: 15px;">
+                  <label class="form-label" style="display: flex; justify-content: space-between; align-items: center;">
+                    <span>SQL Table Creation Schema</span>
+                    <button type="button" class="btn btn-secondary" id="btn-copy-sql" style="width: auto; padding: 4px 10px; font-size: 11px; height: auto;">
+                      <i class="fa-solid fa-copy" style="margin-right: 4px;"></i>Copy SQL
+                    </button>
+                  </label>
+                  <textarea id="db-sql-schema" class="form-input" style="height: 120px; font-family: monospace; font-size: 11px; padding: 10px; line-height: 1.4; resize: none; background-color: var(--bg-body);" readonly>-- 1. Vans Table
+CREATE TABLE IF NOT EXISTS vans (
+  van_number VARCHAR(50) PRIMARY KEY,
+  registration_number VARCHAR(100) NOT NULL,
+  vehicle_model VARCHAR(100) NOT NULL,
+  capacity INT NOT NULL,
+  assigned_driver_id VARCHAR(50),
+  status VARCHAR(50) DEFAULT 'Active'
+);
+
+-- 2. Drivers Table
+CREATE TABLE IF NOT EXISTS drivers (
+  id VARCHAR(50) PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  phone VARCHAR(20) NOT NULL,
+  address TEXT NOT NULL,
+  license_number VARCHAR(100) NOT NULL,
+  assigned_van_number VARCHAR(50)
+);
+
+-- 3. Students Table
+CREATE TABLE IF NOT EXISTS students (
+  id VARCHAR(50) PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  class VARCHAR(50) NOT NULL,
+  section VARCHAR(50) NOT NULL,
+  parent_name VARCHAR(100) NOT NULL,
+  parent_phone VARCHAR(20) NOT NULL,
+  student_stop VARCHAR(200) NOT NULL,
+  assigned_van_number VARCHAR(50)
+);
+
+-- 4. Trips Table
+CREATE TABLE IF NOT EXISTS trips (
+  trip_id VARCHAR(50) PRIMARY KEY,
+  date DATE NOT NULL,
+  route VARCHAR(200) NOT NULL,
+  driver_id VARCHAR(50),
+  van_number VARCHAR(50),
+  start_time TIME NOT NULL,
+  end_time TIME NOT NULL,
+  status VARCHAR(50) DEFAULT 'Scheduled'
+);
+
+-- 5. Payments Table
+CREATE TABLE IF NOT EXISTS payments (
+  id VARCHAR(50) PRIMARY KEY,
+  student_name VARCHAR(100) NOT NULL,
+  total_fee DECIMAL(10,2) NOT NULL,
+  paid_amount DECIMAL(10,2) DEFAULT 0,
+  pending_amount DECIMAL(10,2) NOT NULL,
+  payment_date DATE,
+  payment_mode VARCHAR(50) DEFAULT 'Online',
+  status VARCHAR(50) DEFAULT 'Pending'
+);</textarea>
+                  <p class="setting-desc" style="margin-top: 5px;">Copy this schema and run it in the SQL Editor on your Supabase dashboard to set up all tables.</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="settings-card" style="border-color: var(--danger);">
+              <h3 class="settings-section-title" style="color: var(--danger);">Danger Zone</h3>
+              <div class="setting-row" style="border: none;">
+                <div class="setting-label-group">
+                  <span class="setting-label" data-i18n="resetBtn">Reset All System Demo Data</span>
+                  <span class="setting-desc">Deletes all changes and re-seeds default mock datasets</span>
+                </div>
+                <button class="btn btn-danger" id="btn-reset-demo" data-i18n="resetBtn">Reset Demo Data</button>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+      </div>
+
+      <!-- Footer -->
+      <footer style="padding: 20px 30px; text-align: center; font-size: 13px; color: var(--text-muted); border-top: 1px solid var(--border-color); background-color: var(--bg-header);">
+        <span data-i18n="footerText">School Van Management System Dashboard • Admin Panel</span>
+      </footer>
+
+    </main>
+  </div>
+
+  <!-- ================= NOTIFICATIONS SLIDING SIDE DRAWER ================= -->
+  <div class="notification-drawer" id="notification-drawer">
+    <div class="drawer-header">
+      <h3 class="drawer-title" data-i18n="notificationCenter">Notification Center</h3>
+      <button class="drawer-close" id="notif-drawer-close" aria-label="Close Panel">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    <div class="drawer-body" id="notif-drawer-body">
+      <!-- Populated dynamically -->
+    </div>
+    <div class="drawer-footer">
+      <button class="drawer-link" id="notif-mark-read" data-i18n="markAllRead">Mark all as read</button>
+      <span style="color:var(--border-color); margin: 0 8px;">|</span>
+      <button class="drawer-link" id="notif-clear-all" data-i18n="clearAll">Clear alerts</button>
+    </div>
+  </div>
+
+  <!-- ================= UNIVERSAL CRUD MODALS CONTAINER ================= -->
+  <!-- Van Modal -->
+  <div class="modal-overlay" id="modal-van">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title" id="van-modal-title">Add New Van</h3>
+        <button class="modal-close-btn" data-close-modal="modal-van"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form id="form-van" novalidate>
+        <div class="modal-body">
+          <input type="hidden" id="van-form-mode">
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="van-num" data-i18n="vanNum">Van Number</label>
+              <input type="text" id="van-num" class="form-input" style="padding-left: 14px;" required placeholder="e.g. V-06">
+              <span class="inline-error" id="error-van-num">Required and unique.</span>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="van-reg" data-i18n="vanReg">Reg Number</label>
+              <input type="text" id="van-reg" class="form-input" style="padding-left: 14px;" required placeholder="e.g. TN-01-XX-9999">
+              <span class="inline-error" id="error-van-reg">Required.</span>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="van-model" data-i18n="vanModel">Vehicle Model</label>
+              <input type="text" id="van-model" class="form-input" style="padding-left: 14px;" required placeholder="e.g. Force Traveller">
+              <span class="inline-error" id="error-van-model">Required.</span>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="van-cap" data-i18n="vanCap">Capacity</label>
+              <input type="number" id="van-cap" class="form-input" style="padding-left: 14px;" required min="1" max="100" placeholder="15">
+              <span class="inline-error" id="error-van-cap">Required (positive number).</span>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="van-driver" data-i18n="vanDriver">Assigned Driver</label>
+              <select id="van-driver" class="toolbar-select" style="width: 100%; height: 45px;">
+                <!-- Dynamically populated -->
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="van-status" data-i18n="vanStatus">Status</label>
+              <select id="van-status" class="toolbar-select" style="width: 100%; height: 45px;">
+                <option value="Active" data-i18n="statusActive">Active</option>
+                <option value="In Service" data-i18n="statusInService">In Service</option>
+                <option value="Maintenance" data-i18n="statusMaintenance">Maintenance</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-close-modal="modal-van" data-i18n="cancelBtn">Cancel</button>
+          <button type="submit" class="btn btn-primary" data-i18n="saveBtn">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Driver Modal -->
+  <div class="modal-overlay" id="modal-driver">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title" id="driver-modal-title">Add New Driver</h3>
+        <button class="modal-close-btn" data-close-modal="modal-driver"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form id="form-driver" novalidate>
+        <div class="modal-body">
+          <input type="hidden" id="driver-form-mode">
+          <input type="hidden" id="driver-form-id">
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="driver-name" data-i18n="driverName">Driver Name</label>
+              <input type="text" id="driver-name" class="form-input" style="padding-left: 14px;" required placeholder="Full Name">
+              <span class="inline-error" id="error-driver-name">Required.</span>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="driver-phone" data-i18n="driverPhone">Phone Number</label>
+              <input type="tel" id="driver-phone" class="form-input" style="padding-left: 14px;" required placeholder="10 Digit Mobile">
+              <span class="inline-error" id="error-driver-phone">Required (10-digit numeric).</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="driver-address" data-i18n="driverAddress">Address</label>
+            <input type="text" id="driver-address" class="form-input" style="padding-left: 14px;" required placeholder="Street Name, City">
+            <span class="inline-error" id="error-driver-address">Required.</span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="driver-lic" data-i18n="driverLicNum">License Number</label>
+            <input type="text" id="driver-lic" class="form-input" style="padding-left: 14px;" required placeholder="DL-XXXXXXXXXXXXXXXX">
+            <span class="inline-error" id="error-driver-lic">Required.</span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="driver-van" data-i18n="driverVan">Assigned Van</label>
+            <select id="driver-van" class="toolbar-select" style="width: 100%; height: 45px;">
+              <!-- Dynamically populated -->
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-close-modal="modal-driver" data-i18n="cancelBtn">Cancel</button>
+          <button type="submit" class="btn btn-primary" data-i18n="saveBtn">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Student Modal -->
+  <div class="modal-overlay" id="modal-student">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title" id="student-modal-title">Add New Student</h3>
+        <button class="modal-close-btn" data-close-modal="modal-student"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form id="form-student" novalidate>
+        <div class="modal-body">
+          <input type="hidden" id="student-form-mode">
+          <input type="hidden" id="student-form-id">
+          
+          <div class="form-group">
+            <label class="form-label" for="student-name" data-i18n="studentName">Student Name</label>
+            <input type="text" id="student-name" class="form-input" style="padding-left: 14px;" required placeholder="Student Name">
+            <span class="inline-error" id="error-student-name">Required.</span>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="student-class" data-i18n="studentClass">Class</label>
+              <input type="text" id="student-class" class="form-input" style="padding-left: 14px;" required placeholder="e.g. 10">
+              <span class="inline-error" id="error-student-class">Required.</span>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="student-sec" data-i18n="studentSection">Section</label>
+              <input type="text" id="student-sec" class="form-input" style="padding-left: 14px;" required placeholder="e.g. A">
+              <span class="inline-error" id="error-student-sec">Required.</span>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="student-parent" data-i18n="studentParent">Parent Name</label>
+              <input type="text" id="student-parent" class="form-input" style="padding-left: 14px;" required placeholder="Guardian Name">
+              <span class="inline-error" id="error-student-parent">Required.</span>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="student-parent-phone" data-i18n="studentParentPhone">Parent Phone</label>
+              <input type="tel" id="student-parent-phone" class="form-input" style="padding-left: 14px;" required placeholder="10 Digit Mobile">
+              <span class="inline-error" id="error-student-parent-phone">Required (10-digit numeric).</span>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="student-stop" data-i18n="studentStop">Student Stop</label>
+              <input type="text" id="student-stop" class="form-input" style="padding-left: 14px;" required placeholder="Enter Stop (e.g. Adyar)">
+              <span class="inline-error" id="error-student-stop">Required.</span>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="student-van" data-i18n="studentVan">Assigned Van</label>
+              <select id="student-van" class="toolbar-select" style="width: 100%; height: 45px;">
+                <!-- Dynamically populated -->
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-close-modal="modal-student" data-i18n="cancelBtn">Cancel</button>
+          <button type="submit" class="btn btn-primary" data-i18n="saveBtn">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Trip Modal -->
+  <div class="modal-overlay" id="modal-trip">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title" id="trip-modal-title">Schedule New Trip</h3>
+        <button class="modal-close-btn" data-close-modal="modal-trip"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form id="form-trip" novalidate>
+        <div class="modal-body">
+          <input type="hidden" id="trip-form-mode">
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="trip-id" data-i18n="tripId">Trip ID</label>
+              <input type="text" id="trip-id" class="form-input" style="padding-left: 14px;" required placeholder="e.g. T-109">
+              <span class="inline-error" id="error-trip-id">Required and unique.</span>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="trip-date" data-i18n="tripDate">Date</label>
+              <input type="date" id="trip-date" class="form-input" style="padding-left: 14px;" required>
+              <span class="inline-error" id="error-trip-date">Required.</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="trip-route" data-i18n="tripRoute">Route</label>
+            <input type="text" id="trip-route" class="form-input" style="padding-left: 14px;" required placeholder="e.g. Velachery Drop (Evening)">
+            <span class="inline-error" id="error-trip-route">Required.</span>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="trip-driver" data-i18n="tripDriver">Driver</label>
+              <select id="trip-driver" class="toolbar-select" style="width: 100%; height: 45px;">
+                <!-- Dynamically populated -->
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="trip-van" data-i18n="tripVan">Van</label>
+              <select id="trip-van" class="toolbar-select" style="width: 100%; height: 45px;">
+                <!-- Dynamically populated -->
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="trip-start" data-i18n="tripStart">Start Time</label>
+              <input type="time" id="trip-start" class="form-input" style="padding-left: 14px;" required>
+              <span class="inline-error" id="error-trip-start">Required.</span>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="trip-end" data-i18n="tripEnd">End Time</label>
+              <input type="time" id="trip-end" class="form-input" style="padding-left: 14px;" required>
+              <span class="inline-error" id="error-trip-end">Required.</span>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-close-modal="modal-trip" data-i18n="cancelBtn">Cancel</button>
+          <button type="submit" class="btn btn-primary" data-i18n="saveBtn">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Payment Modal -->
+  <div class="modal-overlay" id="modal-payment">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title" id="payment-modal-title">Record Payment</h3>
+        <button class="modal-close-btn" data-close-modal="modal-payment"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form id="form-payment" novalidate>
+        <div class="modal-body">
+          <input type="hidden" id="payment-form-mode">
+          <input type="hidden" id="payment-form-id">
+          
+          <div class="form-group">
+            <label class="form-label" for="payment-student" data-i18n="payStudent">Student Name</label>
+            <select id="payment-student" class="toolbar-select" style="width: 100%; height: 45px;">
+              <!-- Dynamically populated -->
+            </select>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="payment-total" data-i18n="payTotal">Total Fee</label>
+              <input type="number" id="payment-total" class="form-input" style="padding-left: 14px;" required min="0" placeholder="e.g. 3500">
+              <span class="inline-error" id="error-payment-total">Required.</span>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="payment-paid" data-i18n="payPaid">Paid Amount</label>
+              <input type="number" id="payment-paid" class="form-input" style="padding-left: 14px;" required min="0" placeholder="e.g. 2000">
+              <span class="inline-error" id="error-payment-paid">Required (cannot exceed total fee).</span>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="payment-date" data-i18n="payDate">Payment Date</label>
+              <input type="date" id="payment-date" class="form-input" style="padding-left: 14px;" required>
+              <span class="inline-error" id="error-payment-date">Required.</span>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="payment-mode" data-i18n="payMode">Payment Mode</label>
+              <select id="payment-mode" class="toolbar-select" style="width: 100%; height: 45px;">
+                <option value="Online" data-i18n="modeOnline">Online</option>
+                <option value="Offline" data-i18n="modeOffline">Offline</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="payment-status" data-i18n="payStatus">Payment Status</label>
+            <select id="payment-status" class="toolbar-select" style="width: 100%; height: 45px;">
+              <option value="Paid" data-i18n="statusPaid">Paid</option>
+              <option value="Pending" data-i18n="statusPending">Pending</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-close-modal="modal-payment" data-i18n="cancelBtn">Cancel</button>
+          <button type="submit" class="btn btn-primary" data-i18n="saveBtn">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Detail Dialog Profile View Modal (For Driver details, Student details) -->
+  <div class="modal-overlay" id="modal-profile-view">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title" id="profile-modal-title">Registry Profile Details</h3>
+        <button class="modal-close-btn" data-close-modal="modal-profile-view"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body" id="profile-modal-body">
+        <!-- Built dynamically on demand -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-close-modal="modal-profile-view" data-i18n="cancelBtn">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dialog Modal Confirmation Box -->
+  <div class="modal-overlay" id="modal-confirm">
+    <div class="modal-card" style="max-width: 400px;">
+      <div class="modal-header">
+        <h3 class="modal-title"><i class="fa-solid fa-circle-question" style="color:var(--warning); margin-right:8px;"></i>Confirm Action</h3>
+        <button class="modal-close-btn" data-close-modal="modal-confirm"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <p id="confirm-msg" data-i18n="confirmDelete">Are you sure you want to delete this record?</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-close-modal="modal-confirm" data-i18n="cancelBtn">Cancel</button>
+        <button type="button" class="btn btn-danger" id="confirm-ok-btn">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Map Route Viewer Modal -->
+  <div class="modal-overlay" id="modal-route-map">
+    <div class="modal-card" style="max-width: 750px; width: 90%;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="route-map-title"><i class="fa-solid fa-map-location-dot" style="color:var(--primary); margin-right:8px;"></i>Trip Route Map</h3>
+        <button class="modal-close-btn" data-close-modal="modal-route-map"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <div id="route-map" style="width: 100%; height: 450px; border-radius: var(--radius-md); border: 1px solid var(--border-color); z-index: 10;"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-close-modal="modal-route-map">Close Map</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= VOICE ASSISTANT RECOGNITION POPUP ================= -->
+  <div class="voice-assistant-overlay" id="voice-overlay">
+    <div class="voice-wave">
+      <div class="voice-bar"></div>
+      <div class="voice-bar"></div>
+      <div class="voice-bar"></div>
+      <div class="voice-bar"></div>
+    </div>
+    <span class="voice-status-text" id="voice-text" data-i18n="voiceListening">Listening for commands...</span>
+  </div>
+
+  <!-- ================= DYNAMIC TOAST CONTAINER ================= -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Core App Controller Coordinator Script -->
+  <script type="module" src="app.js"></script>
+  <!-- ================= MOBILE BOTTOM NAVIGATION BAR ================= -->
+  <!-- ================= MOBILE BOTTOM NAVIGATION BAR ================= -->
+  <nav class="mobile-bottom-nav" id="mobile-bottom-nav">
+    <button class="bottom-nav-item active" data-section="dashboard">
+      <i class="fa-solid fa-chart-pie"></i>
+      <span>Home</span>
+    </button>
+    <button class="bottom-nav-item" data-section="students">
+      <i class="fa-solid fa-user-graduate"></i>
+      <span>Students</span>
+    </button>
+    <button class="bottom-nav-item" data-section="trips">
+      <i class="fa-solid fa-route"></i>
+      <span>Trips</span>
+    </button>
+    <button class="bottom-nav-item" data-section="payments">
+      <i class="fa-solid fa-credit-card"></i>
+      <span>Payments</span>
+    </button>
+    <button class="bottom-nav-item" data-section="vans">
+      <i class="fa-solid fa-van-shuttle"></i>
+      <span>Vans</span>
+    </button>
+    <button class="bottom-nav-item" data-section="settings">
+      <i class="fa-solid fa-gears"></i>
+      <span>More</span>
+    </button>
+  </nav>
+
+  <!-- ================= MOBILE FLOATING ACTION BUTTON (FAB) ================= -->
+  <button class="mobile-fab" id="mobile-fab" title="Add New Record">
+    <i class="fa-solid fa-plus"></i>
+  </button>
+
+  <!-- Mobile Bottom Nav + FAB Logic -->
+  <script>
+    (function() {
+      // Bottom nav item click → navigate
+      document.querySelectorAll('.bottom-nav-item').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const section = btn.getAttribute('data-section');
+          // Update active state
+          document.querySelectorAll('.bottom-nav-item').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          // Mirror to sidebar nav
+          document.querySelectorAll('.sidebar-link').forEach(link => {
+            if (link.getAttribute('data-section') === section) {
+              link.classList.add('active');
+            } else {
+              link.classList.remove('active');
+            }
+          });
+          // Hide all sections, show target
+          document.querySelectorAll('.content-section').forEach(s => s.style.display = 'none');
+          const target = document.getElementById('section-' + section);
+          if (target) target.style.display = 'block';
+          // Close sidebar if open
+          document.getElementById('app-sidebar').classList.remove('open');
+          // Trigger app navigation if available
+          if (window.__appNavigate) window.__appNavigate(section);
+        });
+      });
+
+      // Keep bottom nav in sync when sidebar links are clicked
+      document.querySelectorAll('.sidebar-link').forEach(link => {
+        link.addEventListener('click', () => {
+          const section = link.getAttribute('data-section');
+          document.querySelectorAll('.bottom-nav-item').forEach(btn => {
+            btn.classList.toggle('active', btn.getAttribute('data-section') === section);
+          });
+        });
+      });
+
+      // FAB button → trigger the "Add" button of the current visible section
+      document.getElementById('mobile-fab').addEventListener('click', () => {
+        const fabMap = {
+          'vans': 'btn-add-van',
+          'drivers': 'btn-add-driver',
+          'students': 'btn-add-student',
+          'trips': 'btn-add-trip',
+          'payments': 'btn-add-payment'
+        };
+        let currentSection = 'dashboard';
+        document.querySelectorAll('.content-section').forEach(sec => {
+          if (sec.style.display !== 'none' && sec.id) {
+            currentSection = sec.id.replace('section-', '');
+          }
+        });
+        const btnId = fabMap[currentSection];
+        if (btnId) {
+          const addBtn = document.getElementById(btnId);
+          if (addBtn) addBtn.click();
+        }
+      });
+    })();
+  </script>
+
+</body>
+</html>

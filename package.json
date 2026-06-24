@@ -1,0 +1,12 @@
+{
+  "name": "school-van-management-system",
+  "version": "1.0.0",
+  "description": "School Van Management System Dashboard",
+  "main": "index.html",
+  "scripts": {
+    "dev": "http-server . -p 3000"
+  },
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  }
+}
